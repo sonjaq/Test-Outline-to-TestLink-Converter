@@ -139,6 +139,10 @@ else
 		$GLOBALS['open_steps']  = true;
 		}
 		
+		if (  $GLOBALS['open_step']  ==  true  ) {
+		test_case_close_step();
+		}
+		
 		// Increment the step counter, open the step, then write the step number, 
 		// and the content of the step as $input_line 
 		$GLOBALS['i']++;
