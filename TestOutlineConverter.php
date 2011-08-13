@@ -222,6 +222,8 @@ else
 		test_case_close_steps();
 		}
 		
+		test_case_summary_close();
+		
 		$GLOBALS['i']++;
 		fwrite($GLOBALS['fh'], $close_case);
 		$GLOBALS['open_test']   =  false;
