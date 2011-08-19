@@ -58,7 +58,7 @@ This is a command line PHP script that requires an INFILE and an OUTFILE.
 else 
 {
 
-	// Initializing variables, defining fuctions
+	// Initializing variables
 
 	$lines        =  file($argv[1], FILE_SKIP_EMPTY_LINES);
 	$fh           =  fopen($argv[2],"w");
@@ -73,17 +73,26 @@ else
 	// These are the unique identifiers that prefix each line and are handled by the switch.
 	// Each line prefix does get thrown into the '$keyring' array.
 	
+	// Keywords are not yet implemented yet
+	
 	$new_test_case             =  '+ ';
 	$new_test_step             =  '- ';
 	$new_test_expected_result  =  '= ';
 	$new_keyword               =  'KW';
-	$shell_comment             =  '# ';
-	$c_comment                 =  '//';	
-	$keyring                   =  array( $new_test_case, $new_test_step, $new_test_expected_result, $shell_comment, $c_comment, $new_keyword );
+	
+	// If you want to comment, but don't like the default comment characters, add or change the values in $commentkeys
+	$commentkeys               =  array( '# ', '//', '##' );
+	
+	// $actionkeys is an array of prefixes that make the code do something, based on the switch use at the end of the script
+	$actionkeys                =  array( $new_test_case, $new_test_step, $new_test_expected_result, $new_keyword );
+	
+	$keyring                   =  array_merge( $actionkeys, $commentkeys );
+
 	
 	// Investigate KEYWORD support
 	// Add CDATA support
-	// Add Line Break support
+	
+	// Defining functions
 	
 	function test_case_open_case()
 	{
@@ -96,7 +105,7 @@ else
 		$GLOBALS['open_test']   =  true;
 		$GLOBALS['i']           =  0;
 		
-		fwrite($GLOBALS['fh'], $open_case);
+		fwrite( $GLOBALS['fh'], $open_case );
 		return;	
 	}
 	
@@ -105,13 +114,13 @@ else
 		$summary_open  =  "    <summary>";
 		
 		if (  $GLOBALS['open_summary']  ==  false  ) {
-		fwrite($GLOBALS['fh'], $summary_open);
+		fwrite( $GLOBALS['fh'], $summary_open );
 		$GLOBALS['open_summary'] = true;
 		}
 		
 		// check to see if it's summary step before doing anything with the line, methinks
 		$summary     =  $GLOBALS['input_line'] . "\n";
-		fwrite($GLOBALS['fh'], $summary);
+		fwrite( $GLOBALS['fh'], $summary );
 				
 		return;
 		
@@ -122,7 +131,7 @@ else
 		$summary_close =  "    </summary>  \n";
 		
 		if (  $GLOBALS['open_summary']  ==  true  ) {
-		fwrite($GLOBALS['fh'], $summary_close);
+		fwrite( $GLOBALS['fh'], $summary_close );
 		$GLOBALS['open_summary']  = false;
 		
 		return;
@@ -147,7 +156,7 @@ else
 		// and the content of the step as $input_line 
 		$GLOBALS['i']++;
 		$step      =  "  <step>\n    <step_number>" . $GLOBALS['i'] . "</step_number>\n      <actions>" . $GLOBALS['input_line'] . "</actions>\n";
-		fwrite($GLOBALS['fh'], $step);
+		fwrite( $GLOBALS['fh'], $step );
 		$GLOBALS['open_step']  =  true;
 		$GLOBALS['open_steps'] =  true;
 		
@@ -164,7 +173,7 @@ else
 		// Close the step
 		$close_step   =  "    </step>\n";
 		
-		fwrite($GLOBALS['fh'], $close_step);
+		fwrite( $GLOBALS['fh'], $close_step );
 		$GLOBALS['open_step']    =   false;
 		return;
 		
@@ -177,13 +186,13 @@ else
 		if (  $GLOBALS['open_step']  ==  false  ) {
 		$GLOBALS['i']++;
 		$dummy_step =  "  <step>\n    <step_number>" . $GLOBALS['i'] . "</step_number>\n      <actions></actions>\n";
-		fwrite($GLOBALS['fh'], $dummy_step);
+		fwrite( $GLOBALS['fh'], $dummy_step );
 		$GLOBALS['open_step']  =  true;
 		}
 
 		//  Write the expected result with the content $input_line
 		$expected   =  "      <expectedresults>" . $GLOBALS['input_line'] . "</expectedresults>\n";
-		fwrite($GLOBALS['fh'], $expected);
+		fwrite( $GLOBALS['fh'], $expected );
 		test_case_close_step();
 		return;
 	}
@@ -204,7 +213,7 @@ else
 		}
 		
 		// Write the $closing_steps string, set openSteps to false, and reset the step counter.
-		fwrite($GLOBALS['fh'], $closing_steps);
+		fwrite( $GLOBALS['fh'], $closing_steps );
 		$GLOBALS['open_steps']    =  false;
 		$GLOBALS['i']             =  0;
 		return;
@@ -225,30 +234,30 @@ else
 		test_case_summary_close();
 		
 		$GLOBALS['i']++;
-		fwrite($GLOBALS['fh'], $close_case);
+		fwrite( $GLOBALS['fh'], $close_case );
 		$GLOBALS['open_test']   =  false;
 		return;
 	}
 
 	// Start the program
 	
-	fwrite($GLOBALS['fh'], $header);
+	fwrite( $GLOBALS['fh'], $header );
 	
 	// Starting the evaluation of each line as it's input into the program.
 	
 	
 	foreach ($lines as $line_num => $line) {
-			$input_line                =  trim($line);
-			$input_line                =  htmlspecialchars($input_line, ENT_QUOTES);
-			$key                       =  substr($input_line, 0, 2);
+			$input_line                =  trim( $line );
+			$input_line                =  htmlspecialchars( $input_line, ENT_QUOTES );
+			$key                       =  substr( $input_line, 0, 2 );
 			
 			// Detecting content on in $input_line - helps with blank lines
 			if ( $input_line ) {
 			
 				if ( in_array($key, $keyring )) {
 				
-				$input_line  =  trim($input_line, "$key");
-					switch ($key) {
+				$input_line  =  trim( $input_line, "$key" );
+					switch ( $key ) {
 						case $new_test_case:
 							test_case_summary_close();
 							test_case_open_case();
@@ -273,8 +282,8 @@ else
 		}
 	
 test_case_close_case();
-fwrite($GLOBALS['fh'], $close_cases);
-fclose($GLOBALS['fh']);
+fwrite( $GLOBALS['fh'], $close_cases );
+fclose( $GLOBALS['fh'] );
 
 echo "In theory, a TestLink-compatible XML file was created.  \nThis file is named $argv[2].\n";
 }
