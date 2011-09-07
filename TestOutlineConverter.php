@@ -81,7 +81,7 @@ else
 	$new_keyword               =  'KW';
 	
 	// If you want to comment, but don't like the default comment characters, add or change the values in $commentkeys
-	$commentkeys               =  array( '# ', '//', '##' );
+	$commentkeys               =  array( '# ', '//', '##', '#' );
 	
 	// $actionkeys is an array of prefixes that make the code do something, based on the switch use at the end of the script
 	$actionkeys                =  array( $new_test_case, $new_test_step, $new_test_expected_result, $new_keyword );
