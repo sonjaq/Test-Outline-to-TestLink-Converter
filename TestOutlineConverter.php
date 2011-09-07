@@ -106,6 +106,19 @@ else
 		$GLOBALS['i']           =  0;
 		
 		fwrite( $GLOBALS['fh'], $open_case );
+		
+		// TestLink truncates test case names at 100 chars, and doesn't always insert the remainder of the testcase gracefully into the summary.
+		$count                  =  strlen($GLOBALS['input_line']);
+		if(  $count > 100  ) {
+		    echo "Warning!!!  This test case name is greater than 100 chars and will be truncated: \n";
+		    echo $GLOBALS['input_line'];
+		    echo "\n\n";
+		    // This dumps the line gracefully into Summary
+		    test_case_summary();
+		    
+		}
+		
+		
 		return;	
 	}
 	
