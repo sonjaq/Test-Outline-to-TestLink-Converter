@@ -124,15 +124,17 @@ else
 	
 	function test_case_summary()
 	{
-		$summary_open  =  "    <summary>";
+	    // Added support for HTML data in summary lines
+		$summary_open  =  "    <summary>\n    <![CDATA[\n";
 		
 		if (  $GLOBALS['open_summary']  ==  false  ) {
 		fwrite( $GLOBALS['fh'], $summary_open );
 		$GLOBALS['open_summary'] = true;
 		}
 		
+		$htmlsummary =  htmlspecialchars_decode( $GLOBALS['input_line'], ENT_NOQUOTES);
 		// check to see if it's summary step before doing anything with the line, methinks
-		$summary     =  $GLOBALS['input_line'] . "\n";
+		$summary     =  $htmlsummary . "\n";
 		fwrite( $GLOBALS['fh'], $summary );
 				
 		return;
@@ -141,7 +143,7 @@ else
 	
 	function test_case_summary_close()
 	{
-		$summary_close =  "    </summary>  \n";
+		$summary_close =  "    ]]>\n    </summary>  \n";
 		
 		if (  $GLOBALS['open_summary']  ==  true  ) {
 		fwrite( $GLOBALS['fh'], $summary_close );
@@ -237,7 +239,7 @@ else
 	
 	function test_case_close_case()
 	{
-		$close_case  =  "  </testcase>\n";
+		$close_case  =  " </testcase>\n";
 		
 		if (  $GLOBALS['open_steps'] == true  ) {
 		test_case_close_step();
@@ -260,8 +262,8 @@ else
 	
 	
 	foreach ($lines as $line_num => $line) {
-			$input_line                =  trim( $line );
-			$input_line                =  htmlspecialchars( $input_line, ENT_QUOTES );
+			$source_line               =  trim( $line );
+			$input_line                =  htmlspecialchars( $source_line, ENT_QUOTES );
 			$key                       =  substr( $input_line, 0, 2 );
 			
 			// Detecting content on in $input_line - helps with blank lines
