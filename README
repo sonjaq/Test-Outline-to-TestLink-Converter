@@ -1,26 +1,78 @@
-// This is a test case document sample illustrating how to structure a test case.  Tabs are unimportant.
-// Use a key (+ , - , =) to set up a test case.  You must keep this structure, however, or it will barf. 
-// Test Case is the minimum required, but Summary, Test Steps and Expected Results must be contained 
-// underneath a test case.  c-style (//) and shell-style (# ) comments are both currently respected.
-// Blank lines are ignored.  Always put a space after your key.
+== About ==
 
-+ Test Case Name
-	Summary line1
-	"Continued Summary"
-	More Summary
-		- Test Step 1
-			= Expected 1	
-		- Test Step 2
-			= Expected 2
-+ Test Case Name2
-// This line will be commented out
-#  So will this line
+Some background on this project cane be found at the Clockwork.net blog.  
 
+Here's a handy link:
 
-		- Test Step 1
-			= Expected 1a
-			= Expected 1b
+http://www.clockwork.net/blog/2011/12/19/547/test_plans_testlink_and_adventures_in_php
 
+== Sample Usage ==
 
-		- Test Step 2
-			= Expected 2
+There is a sample test plan available in SampleTestPlan.txt.  To see what the XML will look like, run the following from the command line.
+
+    ./TestOutlineConverter.php SampleTestPlan.txt SampleTestPlan.xml
+    
+You will be prompted for a test plan name.  You can avoid the prompt by adding a name for the Test Plan as a third argument, however, spaces must be escaped to be respected.
+
+== To import into TestLink: ==
+
+    1. Log into your TestLink instance.  
+    2. Proceed to "Edit Test Cases".  
+    3. Select the folder level you'd like to import your test plan to.
+    4. Select "Import Test Suite"
+    5. Upload the generated XML file that was created
+    6. Add your test cases to a test plan and execute
+    
+Please see the constraints section in the bottom of this document for known limitations. 
+
+== Basic Usage: ==
+
+This is a command line PHP script that requires an INFILE and an OUTFILE.
+Optionally, a third argument can be supplied for a Test Plan name.
+
+  Usage:
+  ./TestOutlineConverter.php <INFILE> <OUTFILE> <TESTPLAN NAME>
+
+  <INFILE> Source of your test cases
+  
+  <OUTFILE> The XML file, formatted for TestLink 
+  
+  <TESTPLAN NAME>  This will be your test plan name.  If it is not set, you will be prompted for it.
+  
+  
+  Notes for test outline creation:
+  	+	Starting a line with '+ ' creates a test case with the 
+  		rest of the line
+	-	'- ' Denotes a Test Step
+	=	'= ' Denotes Expected Results.  If no associated step exists, 
+		a blank step is created.
+	//	Comment out a line with '//'
+	# 	Comment out a line with '# '
+	{ <SUITE NAME>  Opens a test suite or folder in TestLink.  
+	                Each test plan must start with one of these. 
+	                If there is no name, you will be prompted.
+	}   Closes a test suite or folder in TestLink.  
+	
+	[no line prefix] 
+		No Line prefix means it will get entered into the Test Case
+		'Summary' in Test Link.  Basic HTML elements are safe here.
+		
+	[blank lines]
+		Blank lines will be ignored.
+	
+	
+	Always follow the key character with a space.  
+    
+== Constraints and Limitations ==
+
+Test Plans work best when they're created in a specific order.  Here's how one should look:
+
+{ Test Plan/Suite Name (One line, starts with '{')
++ Test Case Name (always starts with '+ ', no HTML or line breaks allowed)
+    Summary information.  The summary can accept HTML, and line breaks are fine, however, summary info can only exist immediately after a test case.
+    
+    - First Test Step (always starts with '- ') (HTML is Safe now, line breaks are not)
+        = Expected results (starts with '= ', HTML Safe, line breaks, no)
+}
+
+Please feel free to direct questions, comments, etc. to leaf@clockwork.net

@@ -1,0 +1,42 @@
+// Comments and questions can be sent to leaf@clockwork.net
+
+// This is a test case document sample illustrating how to structure a test case.  Tabs are unimportant, and just for making things look organized.
+// Use a key (+ , - , =) to set up a test case.  You must keep this structure, however, or it will barf. 
+// Test Case is the minimum required, but Summary, Test Steps and Expected Results must be contained underneath a test case.  
+// C-style (//) and shell-style (# ) comments are both currently respected.
+// Blank lines are ignored.  Always put a space after your key character.
+
+
+{ Top Level Test Suite
++ Test Case Name
+	Summary line1
+	"Continued Summary"
+	More Summary
+		- Test Step 1
+			= Expected 1	
+		- Test Step 2
+			= Expected 2
+}
+
+{ Top Level Suite with sub-folders/suites
+
+    { Sub-folder Suite    
+        + Sub-folder Test Case 1
+            <p>Summary Information.</p>  
+            <p>HTML and multiple lines work great in summaries.</p>
+                - Test Step 1
+                    = Expected 1a
+                    = Expected 1b
+                - Test Step 2
+                    = Expected 2		
+   
+        { Sub-folder Suite Inside another Subfolder    
+            + Sub-folder Test Case 2
+            // This line will be commented out
+            #  So will this line
+                    - Test Step 1
+                    - Test Step 2
+                        = Expected 2		
+        }
+    }
+}

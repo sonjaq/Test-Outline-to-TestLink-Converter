@@ -6,21 +6,26 @@
  * cases formatted in a TestLink-friendly XML format.
  * 
  *
- * @author Andrew Leaf <andrew@clockwork.net>
+ * @author Andrew Leaf <leaf@clockwork.net>
  * 
 **/
 
-if ($argc != 3 || in_array($argv[1], array('--help', '-help', '-h', '-?'))) {
+if ($argc < 3 || in_array($argv[1], array('--help', '-help', '-h', '-?'))) {
 ?>
 
 This is a command line PHP script that requires an INFILE and an OUTFILE.
+Optionally, a third argument can be supplied for a Test Plan name.
 
   Usage:
-  <?php echo $argv[0]; ?> <INFILE> <OUTFILE>
+  <?php echo $argv[0]; ?> <INFILE> <OUTFILE> <TESTPLAN NAME>
 
   <INFILE> Source of your test cases
   
   <OUTFILE> The XML file, formatted for TestLink 
+  
+  <TESTPLAN NAME>  This will be your test plan name.  If it is not set, you will be prompted for it.
+  
+  Read the README for more information on how to use your newly created TestLink-friendly XML file.
   
   Notes for test outline creation:
   	+	Starting a line with '+ ' creates a test case with the 
@@ -30,10 +35,14 @@ This is a command line PHP script that requires an INFILE and an OUTFILE.
 		a blank step is created.
 	//	Comment out a line with '//'
 	# 	Comment out a line with '# '
+	{ <SUITE NAME>  Opens a test suite or folder in TestLink.  
+	                Each test plan must start with one of these. 
+	                If there is no name, you will be prompted.
+	}   Closes a test suite or folder in TestLink.  
 	
 	[no line prefix] 
 		No Line prefix means it will get entered into the Test Case
-		'Summary' in Test Link.  
+		'Summary' in Test Link.  Basic HTML elements are safe here.
 		
 	[blank lines]
 		Blank lines will be ignored.
@@ -43,13 +52,24 @@ This is a command line PHP script that requires an INFILE and an OUTFILE.
 	
 	Example:
 	
-	+ TestCase
-		Summary Information
-			- TestStep
-			= Expected Result
-		// Ignore this line
-		#  Ignore this line, too
+    { TestSuite
+    + TestCase
+        Summary Information
+            - TestStep
+            = Expected Result
+        // Ignore this line
+        #  Ignore this line, too
+    }
+    
+    After running the script, here's how to import into TestLink: 
 
+    1. Log into your TestLink instance.  
+    2. Proceed to "Edit Test Cases".  
+    3. Select the folder level you'd like to import your test plan to.
+    4. Select "Import Test Suite"
+    5. Upload the generated XML file that was created
+    6. Add your test cases to a test plan and execute
+    
 <?php
 
 // TODO - if a file exists, ask to rename OUTFILE or overwrite.
@@ -60,15 +80,18 @@ else
 
 	// Initializing variables
 
-	$lines        =  file($argv[1], FILE_SKIP_EMPTY_LINES);
-	$fh           =  fopen($argv[2],"w");
-	$close_cases  =  "</testcases>\n";
-	$header       =  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testcases>\n";
-	$open_test    =  false;
-	$open_step    =  false;
-	$open_steps   =  false;
-	$open_summary =  false;
-	$i 	          =  0;
+	$lines         =  file($argv[1], FILE_SKIP_EMPTY_LINES);
+	$fh            =  fopen($argv[2],"w");
+	$close_cases   =  "</testcases>\n";
+	$header        =  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	$open_test     =  false;
+	$open_step     =  false;
+	$open_steps    =  false;
+	$open_summary  =  false;
+	$i 	           =  0;
+	$open_suite    =  0;
+	$testplan_name =  $argv[3];
+	
 	
 	// These are the unique identifiers that prefix each line and are handled by the switch.
 	// Each line prefix does get thrown into the '$keyring' array.
@@ -79,30 +102,97 @@ else
 	$new_test_step             =  '- ';
 	$new_test_expected_result  =  '= ';
 	$new_keyword               =  'KW';
+	$open_test_suite           =  '{ ';
+	$close_test_suite          =  '} ';
+	$open_suite_alt            =  '{';
+	$close_suite_alt           =  '}';
+    
 	
 	// If you want to comment, but don't like the default comment characters, add or change the values in $commentkeys
 	$commentkeys               =  array( '# ', '//', '##', '#' );
 	
 	// $actionkeys is an array of prefixes that make the code do something, based on the switch use at the end of the script
-	$actionkeys                =  array( $new_test_case, $new_test_step, $new_test_expected_result, $new_keyword );
+	$actionkeys                =  array( 
+	                            $new_test_case, 
+	                            $new_test_step, 
+	                            $new_test_expected_result, 
+	                            $new_keyword, 
+	                            $open_test_suite, 
+	                            $close_test_suite, 
+	                            $open_suite_alt, 
+	                            $close_suite_alt 
+	                            );
 	
 	$keyring                   =  array_merge( $actionkeys, $commentkeys );
 
 	
-	// Investigate KEYWORD support
-	// Add CDATA support
-	
 	// Defining functions
+	
+	function test_suite_open()
+	{
+	    
+	    
+		// If a test case is currently open, close it.
+        if (  $GLOBALS['open_test']  ==  true  ) {
+            test_case_close_case();
+		}
+		
+		// Checking the length of $GLOBALS['input_line'] to make sure there is a name.
+        $count                  =  strlen($GLOBALS['input_line']);
+        
+	
+		// TestLink truncates test case and probably suite names that are long.  Requesting new test suite name if there is more than 30 chars or less than 1.
+        while (  $count > 255 || $count < 1  ||  $GLOBALS['legacy_support']  == true) {
+             echo "Warning!!!  This test suite name is too short or too long... please provide a new one \n";
+             echo $GLOBALS['input_line'];
+             echo "\n\n";
+             $GLOBALS['input_line']  =  trim(fgets(STDIN));
+             $GLOBALS['input_line']  =  htmlspecialchars( $GLOBALS['input_line'], ENT_QUOTES );
+             $count                  =  strlen($GLOBALS['input_line']);
+             $GLOBALS['legacy_support']  =  false;
+        }
+            
+        $GLOBALS['input_line']  =  htmlspecialchars( $GLOBALS['input_line'], ENT_QUOTES );
+		
+		
+		
+		// Increment the level of suites.  The number of 
+	    $GLOBALS['open_suite']++;
+		$open_suite              =  " <testsuite name=\"" . $GLOBALS['input_line'] . "\">\n";
+	
+		fwrite( $GLOBALS['fh'], $open_suite );
+			
+		return;	
+	}
+	
 	
 	function test_case_open_case()
 	{
+	    
+        if ($GLOBALS['open_suite'] == 0 ) {
+            
+            
+            // If this is an older test plan without any suites, and the first test case starts before seeing a suite, it will force a suite name.
+            
+            // We store the original line so it doesn't get overwritten.
+            
+
+            $input_line_holder              =  $GLOBALS['input_line'];
+            $GLOBALS['input_line']          =  "";
+            test_suite_open();
+            $GLOBALS['input_line']          =  $input_line_holder;
+        }	    
+
+	
 		// If a test case is currently open, close it.
 		if (  $GLOBALS['open_test']  ==  true  ) {
-		test_case_close_case();
+            test_case_close_case();
 		}
 		
 		$open_case              =  " <testcase name=\"" . $GLOBALS['input_line'] . "\">\n";
 		$GLOBALS['open_test']   =  true;
+		
+		// Setting the step incrementer to 0 just to be sure.
 		$GLOBALS['i']           =  0;
 		
 		fwrite( $GLOBALS['fh'], $open_case );
@@ -124,14 +214,24 @@ else
 	
 	function test_case_summary()
 	{
-	    // Added support for HTML data in summary lines
+        
+        if (  $GLOBALS['open_test']  == false  ) {
+            echo "You have a summary line outside of a test case. Here's the line:\n\n";
+            echo $GLOBALS['input_line'];
+            echo "\n\nYou probably meant to do something with this line.\n\n Exiting.......";
+            exit;
+        }
+        
 		$summary_open  =  "    <summary>\n    <![CDATA[\n";
 		
 		if (  $GLOBALS['open_summary']  ==  false  ) {
-		fwrite( $GLOBALS['fh'], $summary_open );
-		$GLOBALS['open_summary'] = true;
+            fwrite( $GLOBALS['fh'], $summary_open );
+            $GLOBALS['open_summary'] = true;
 		}
 		
+		// Added support for HTML data in summary lines
+	    // Support for quotes in HTML elements is non-existent in this release
+	    // You likely aren't adding any class or div data, anyway, but basic HTML elements work 
 		$htmlsummary =  htmlspecialchars_decode( $GLOBALS['input_line'], ENT_NOQUOTES);
 		// check to see if it's summary step before doing anything with the line, methinks
 		$summary     =  $htmlsummary . "\n";
@@ -146,8 +246,8 @@ else
 		$summary_close =  "    ]]>\n    </summary>  \n";
 		
 		if (  $GLOBALS['open_summary']  ==  true  ) {
-		fwrite( $GLOBALS['fh'], $summary_close );
-		$GLOBALS['open_summary']  = false;
+            fwrite( $GLOBALS['fh'], $summary_close );
+            $GLOBALS['open_summary']  = false;
 		
 		return;
 		}
@@ -158,19 +258,19 @@ else
 	{
 		// Check to see if steps are already open.  If they are not, open steps.
 		if (  $GLOBALS['open_steps']  ==  false  ) {
-		$steps_open  =  "  <steps>\n";
-		fwrite($GLOBALS['fh'], $steps_open);
-		$GLOBALS['open_steps']  = true;
+            $steps_open  =  "  <steps>\n";
+            fwrite($GLOBALS['fh'], $steps_open);
+            $GLOBALS['open_steps']  = true;
 		}
 		
 		if (  $GLOBALS['open_step']  ==  true  ) {
-		test_case_close_step();
+            test_case_close_step();
 		}
 		
 		// Increment the step counter, open the step, then write the step number, 
 		// and the content of the step as $input_line 
 		$GLOBALS['i']++;
-		$step      =  "  <step>\n    <step_number>" . $GLOBALS['i'] . "</step_number>\n      <actions>" . $GLOBALS['input_line'] . "</actions>\n";
+		$step      =  "  <step>\n    <step_number>" . $GLOBALS['i'] . "</step_number>\n      <actions><![CDATA[" . $GLOBALS['input_line'] . "]]></actions>\n";
 		fwrite( $GLOBALS['fh'], $step );
 		$GLOBALS['open_step']  =  true;
 		$GLOBALS['open_steps'] =  true;
@@ -182,7 +282,7 @@ else
 	{
 		//  If steps aren't open, get out
 		if (  $GLOBALS['open_step'] ==  false  ) {
-		return;
+            return;
 		}
 
 		// Close the step
@@ -199,14 +299,14 @@ else
 		
 		// If there isn't a currently open step, create a dummy step.
 		if (  $GLOBALS['open_step']  ==  false  ) {
-		$GLOBALS['i']++;
-		$dummy_step =  "  <step>\n    <step_number>" . $GLOBALS['i'] . "</step_number>\n      <actions></actions>\n";
-		fwrite( $GLOBALS['fh'], $dummy_step );
-		$GLOBALS['open_step']  =  true;
+            $GLOBALS['i']++;
+            $dummy_step =  "  <step>\n    <step_number>" . $GLOBALS['i'] . "</step_number>\n      <actions></actions>\n";
+            fwrite( $GLOBALS['fh'], $dummy_step );
+            $GLOBALS['open_step']  =  true;
 		}
 
 		//  Write the expected result with the content $input_line
-		$expected   =  "      <expectedresults>" . $GLOBALS['input_line'] . "</expectedresults>\n";
+		$expected   =  "      <expectedresults><![CDATA[" . $GLOBALS['input_line'] . "]]></expectedresults>\n";
 		fwrite( $GLOBALS['fh'], $expected );
 		test_case_close_step();
 		return;
@@ -217,14 +317,14 @@ else
 	{
 		// If there aren't open steps, bail.
 		if (  $GLOBALS['open_steps']  ==  false  ) {
-		return;
+            return;
 		}
 		
 		$closing_steps   =  "  </steps>\n";
 
 		// If there is an open step, close it.
 		if (  $GLOBALS['open_step'] == true  ) {
-		test_case_close_step();
+            test_case_close_step();
 		}
 		
 		// Write the $closing_steps string, set openSteps to false, and reset the step counter.
@@ -242,21 +342,66 @@ else
 		$close_case  =  " </testcase>\n";
 		
 		if (  $GLOBALS['open_steps'] == true  ) {
-		test_case_close_step();
-		test_case_close_steps();
+            test_case_close_step();
+            test_case_close_steps();
 		}
 		
 		test_case_summary_close();
 		
-		$GLOBALS['i']++;
 		fwrite( $GLOBALS['fh'], $close_case );
 		$GLOBALS['open_test']   =  false;
+		return;
+	}
+	
+	function test_suite_close()
+	{
+	    if (  $GLOBALS['open_test']  ==  true  ) {
+            test_case_close_case();
+		}
+	    
+		$close_suite  =  "</testsuite>\n";
+		
+		// Only close a suite if there is one open
+		if ( $GLOBALS['open_suite'] > 0 ) {
+		    $GLOBALS['open_suite']--;
+		    fwrite( $GLOBALS['fh'], $close_suite );
+		}
+		return;
+	}
+	
+	function test_suite_close_plan()
+	{
+        // For each open suite level, this loop will close.  This means, if you forget to close your suites, you'll be fine.
+		while (  $GLOBALS['open_suite'] > 0  ) {
+           	test_suite_close();
+		}
+		
 		return;
 	}
 
 	// Start the program
 	
 	fwrite( $GLOBALS['fh'], $header );
+
+    if (  $GLOBALS['testplan_name']  == ""  ) {       
+        $GLOBALS['input_line']  =  $GLOBALS['testplan_name'];
+        
+        echo "\n\nALERT!!!! ALERT!!!\n\nLooks like you're going to need to enter a name for this test plan. \n\nTest plans are also referred to as 'suites' with TestLink'.\n\n";
+
+        test_suite_open();        
+    }            
+    $GLOBALS['input_line']  =  htmlspecialchars( $GLOBALS['testplan_name'], ENT_QUOTES );
+		
+		
+		
+    // Increment the level of suites.  The number of 
+    $GLOBALS['open_suite']++;
+    $open_plan              =  " <testsuite name=\"" . $GLOBALS['input_line'] . "\">\n";
+
+    fwrite( $GLOBALS['fh'], $open_plan );
+        
+	
+
 	
 	// Starting the evaluation of each line as it's input into the program.
 	
@@ -268,11 +413,21 @@ else
 			
 			// Detecting content on in $input_line - helps with blank lines
 			if ( $input_line ) {
-			
-				if ( in_array($key, $keyring )) {
+			    
+			    
+				if ( in_array( $key, $keyring )) {
 				
 				$input_line  =  trim( $input_line, "$key" );
 					switch ( $key ) {
+					    
+					    case $open_test_suite:
+					    case $open_suite_alt:
+					        test_suite_open();
+					        break;
+					    case $close_test_suite:
+					    case $close_suite_alt:
+					        test_suite_close();
+					        break;
 						case $new_test_case:
 							test_case_summary_close();
 							test_case_open_case();
@@ -296,10 +451,15 @@ else
 			}
 		}
 	
-test_case_close_case();
-fwrite( $GLOBALS['fh'], $close_cases );
+test_suite_close_plan();
+
+// fwrite( $GLOBALS['fh'], $close_cases );
 fclose( $GLOBALS['fh'] );
 
+$xmllint = shell_exec("xmllint $argv[2]");
+echo $xmllint;
 echo "In theory, a TestLink-compatible XML file was created.  \nThis file is named $argv[2].\n";
+echo "\n\nIf there were any errors, xmllint should have pointed them out above using ^s and some nebulous information.\n\n";
+echo "If the contents of your XML testplan were displayed, this should import into TestLink without hassle.\n\nInstructions on how to import into TestLink can be found in the README or by running the --help command.\n\n";
 }
 ?>
