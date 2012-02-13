@@ -75,4 +75,5 @@ Test Plans work best when they're created in a specific order.  Here's how one s
         = Expected results (starts with '= ', HTML Safe, line breaks, no)
 }
 
-Please feel free to direct questions, comments, etc. to leaf@clockwork.net
+Please feel free to direct questions, comments, etc. to the GitHub issues tracker:  
+  https://github.com/ClockworkNet/Test-Outline-to-TestLink-Converter/issues
