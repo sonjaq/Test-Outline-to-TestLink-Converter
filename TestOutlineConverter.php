@@ -142,14 +142,13 @@ else
         
 	
 		// TestLink truncates test case and probably suite names that are long.  Requesting new test suite name if there is more than 30 chars or less than 1.
-        while (  $count > 255 || $count < 1  ||  $GLOBALS['legacy_support']  == true) {
+        while (  $count > 255 || $count < 1  ) {
              echo "Warning!!!  This test suite name is too short or too long... please provide a new one \n";
              echo $GLOBALS['input_line'];
              echo "\n\n";
              $GLOBALS['input_line']  =  trim(fgets(STDIN));
              $GLOBALS['input_line']  =  htmlspecialchars( $GLOBALS['input_line'], ENT_QUOTES );
              $count                  =  strlen($GLOBALS['input_line']);
-             $GLOBALS['legacy_support']  =  false;
         }
             
         $GLOBALS['input_line']  =  htmlspecialchars( $GLOBALS['input_line'], ENT_QUOTES );
@@ -390,19 +389,16 @@ else
 
         test_suite_open();        
     }            
-    $GLOBALS['input_line']  =  htmlspecialchars( $GLOBALS['testplan_name'], ENT_QUOTES );
-		
-		
-		
-    // Increment the level of suites.  The number of 
-    $GLOBALS['open_suite']++;
-    $open_plan              =  " <testsuite name=\"" . $GLOBALS['input_line'] . "\">\n";
-
-    fwrite( $GLOBALS['fh'], $open_plan );
-        
+	else {
+		$GLOBALS['input_line']  =  htmlspecialchars( $GLOBALS['testplan_name'], ENT_QUOTES );
+		$open_plan              =  " <testsuite name=\"" . $GLOBALS['input_line'] . "\">\n";
 	
+    	$GLOBALS['open_suite']++;
+  		fwrite( $GLOBALS['fh'], $open_plan );
 
-	
+	}
+		
+		
 	// Starting the evaluation of each line as it's input into the program.
 	
 	
