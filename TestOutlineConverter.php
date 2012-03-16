@@ -128,7 +128,7 @@ else
 	
 	// Defining functions
 	
-	function test_suite_open()
+	function test_suite_open(  $input  )
 	{
 	    
 	    
@@ -138,26 +138,26 @@ else
 		}
 		
 		// Checking the length of $GLOBALS['input_line'] to make sure there is a name.
-        $count                  =  strlen($GLOBALS['input_line']);
+        $count                  =  strlen($input);
         
 	
 		// TestLink truncates test case and probably suite names that are long.  Requesting new test suite name if there is more than 30 chars or less than 1.
         while (  $count > 255 || $count < 1  ) {
              echo "Warning!!!  This test suite name is too short or too long... please provide a new one \n";
-             echo $GLOBALS['input_line'];
+             echo $input;
              echo "\n\n";
-             $GLOBALS['input_line']  =  trim(fgets(STDIN));
-             $GLOBALS['input_line']  =  htmlspecialchars( $GLOBALS['input_line'], ENT_QUOTES );
-             $count                  =  strlen($GLOBALS['input_line']);
+             $input  =  trim(  fgets(  STDIN  )  );
+             $input  =  htmlspecialchars(  $input, ENT_QUOTES  );
+             $count  =  strlen(  $input  );
         }
             
-        $GLOBALS['input_line']  =  htmlspecialchars( $GLOBALS['input_line'], ENT_QUOTES );
+        $input  =  htmlspecialchars( $input, ENT_QUOTES );
 		
 		
 		
 		// Increment the level of suites.  The number of 
 	    $GLOBALS['open_suite']++;
-		$open_suite              =  " <testsuite name=\"" . $GLOBALS['input_line'] . "\">\n";
+		$open_suite              =  " <testsuite name=\"" . $input . "\">\n";
 	
 		fwrite( $GLOBALS['fh'], $open_suite );
 			
@@ -165,7 +165,7 @@ else
 	}
 	
 	
-	function test_case_open_case()
+	function test_case_open_case(  $input  )
 	{
 	    
         if ($GLOBALS['open_suite'] == 0 ) {
@@ -176,10 +176,10 @@ else
             // We store the original line so it doesn't get overwritten.
             
 
-            $input_line_holder              =  $GLOBALS['input_line'];
-            $GLOBALS['input_line']          =  "";
-            test_suite_open();
-            $GLOBALS['input_line']          =  $input_line_holder;
+            $input_line_holder       =  $input;
+            $input                   =  "";
+            test_suite_open($input);
+            $input                   =  $input_line_holder;
         }	    
 
 	
@@ -188,7 +188,7 @@ else
             test_case_close_case();
 		}
 		
-		$open_case              =  " <testcase name=\"" . $GLOBALS['input_line'] . "\">\n";
+		$open_case              =  " <testcase name=\"" . $input . "\">\n";
 		$GLOBALS['open_test']   =  true;
 		
 		// Setting the step incrementer to 0 just to be sure.
@@ -197,13 +197,13 @@ else
 		fwrite( $GLOBALS['fh'], $open_case );
 		
 		// TestLink truncates test case names at 100 chars, and doesn't always insert the remainder of the testcase gracefully into the summary.
-		$count                  =  strlen($GLOBALS['input_line']);
+		$count                  =  strlen( $input );
 		if(  $count > 100  ) {
 		    echo "Warning!!!  This test case name is greater than 100 chars and will be truncated: \n";
-		    echo $GLOBALS['input_line'];
+		    echo $input;
 		    echo "\n\n";
 		    // This dumps the line gracefully into Summary
-		    test_case_summary();
+		    test_case_summary($input);
 		    
 		}
 		
@@ -211,12 +211,12 @@ else
 		return;	
 	}
 	
-	function test_case_summary()
+	function test_case_summary(  $input  )
 	{
         
         if (  $GLOBALS['open_test']  == false  ) {
             echo "You have a summary line outside of a test case. Here's the line:\n\n";
-            echo $GLOBALS['input_line'];
+            echo $input;
             echo "\n\nYou probably meant to do something with this line.\n\n Exiting.......";
             exit;
         }
@@ -231,7 +231,7 @@ else
 		// Added support for HTML data in summary lines
 	    // Support for quotes in HTML elements is non-existent in this release
 	    // You likely aren't adding any class or div data, anyway, but basic HTML elements work 
-		$htmlsummary =  htmlspecialchars_decode( $GLOBALS['input_line'], ENT_NOQUOTES);
+		$htmlsummary =  htmlspecialchars_decode( $input, ENT_NOQUOTES);
 		// check to see if it's summary step before doing anything with the line, methinks
 		$summary     =  $htmlsummary . "\n";
 		fwrite( $GLOBALS['fh'], $summary );
@@ -253,7 +253,7 @@ else
 		
 	}
 	
-	function test_case_test_step()
+	function test_case_test_step(  $input  )
 	{
 		// Check to see if steps are already open.  If they are not, open steps.
 		if (  $GLOBALS['open_steps']  ==  false  ) {
@@ -269,7 +269,7 @@ else
 		// Increment the step counter, open the step, then write the step number, 
 		// and the content of the step as $input_line 
 		$GLOBALS['i']++;
-		$step      =  "  <step>\n    <step_number>" . $GLOBALS['i'] . "</step_number>\n      <actions><![CDATA[" . $GLOBALS['input_line'] . "]]></actions>\n";
+		$step      =  "  <step>\n    <step_number>" . $GLOBALS['i'] . "</step_number>\n      <actions><![CDATA[" . $input . "]]></actions>\n";
 		fwrite( $GLOBALS['fh'], $step );
 		$GLOBALS['open_step']  =  true;
 		$GLOBALS['open_steps'] =  true;
@@ -293,7 +293,7 @@ else
 		
 	}
 	
-	function test_case_expected()
+	function test_case_expected(  $input  )
 	{	
 		
 		// If there isn't a currently open step, create a dummy step.
@@ -305,7 +305,7 @@ else
 		}
 
 		//  Write the expected result with the content $input_line
-		$expected   =  "      <expectedresults><![CDATA[" . $GLOBALS['input_line'] . "]]></expectedresults>\n";
+		$expected   =  "      <expectedresults><![CDATA[" . $input . "]]></expectedresults>\n";
 		fwrite( $GLOBALS['fh'], $expected );
 		test_case_close_step();
 		return;
@@ -380,21 +380,21 @@ else
 
 	// Start the program
 	
-	fwrite( $GLOBALS['fh'], $header );
+	fwrite( $fh, $header );
 
-    if (  $GLOBALS['testplan_name']  == ""  ) {       
-        $GLOBALS['input_line']  =  $GLOBALS['testplan_name'];
+    if (  $testplan_name  == ""  ) {       
+        $input_line  =  $testplan_name;
         
         echo "\n\nALERT!!!! ALERT!!!\n\nLooks like you're going to need to enter a name for this test plan. \n\nTest plans are also referred to as 'suites' with TestLink'.\n\n";
 
-        test_suite_open();        
+        test_suite_open($input_line);        
     }            
 	else {
-		$GLOBALS['input_line']  =  htmlspecialchars( $GLOBALS['testplan_name'], ENT_QUOTES );
-		$open_plan              =  " <testsuite name=\"" . $GLOBALS['input_line'] . "\">\n";
+		$input_line  =  htmlspecialchars( $testplan_name, ENT_QUOTES );
+		$open_plan   =  " <testsuite name=\"" . $input_line . "\">\n";
 	
     	$GLOBALS['open_suite']++;
-  		fwrite( $GLOBALS['fh'], $open_plan );
+  		fwrite( $fh, $open_plan );
 
 	}
 		
@@ -418,7 +418,7 @@ else
 					    
 					    case $open_test_suite:
 					    case $open_suite_alt:
-					        test_suite_open();
+					        test_suite_open(  $input_line  );
 					        break;
 					    case $close_test_suite:
 					    case $close_suite_alt:
@@ -426,15 +426,15 @@ else
 					        break;
 						case $new_test_case:
 							test_case_summary_close();
-							test_case_open_case();
+							test_case_open_case(  $input_line  );
 							break;
 						case $new_test_step:
 							test_case_summary_close();
-							test_case_test_step();
+							test_case_test_step(  $input_line  );
 							break;
 						case $new_test_expected_result:
 							test_case_summary_close();
-							test_case_expected();
+							test_case_expected(  $input_line  );
 							break;
 						default:
 							break;					
@@ -442,7 +442,7 @@ else
 				}
 				else
 				{
-				test_case_summary();
+				test_case_summary(  $input_line  );
 				}
 			}
 		}
@@ -450,7 +450,7 @@ else
 test_suite_close_plan();
 
 // fwrite( $GLOBALS['fh'], $close_cases );
-fclose( $GLOBALS['fh'] );
+fclose( $fh );
 
 $xmllint = shell_exec("xmllint $argv[2]");
 echo $xmllint;
