@@ -12,6 +12,9 @@
 	Summary line1
 	"Continued Summary"
 	More Summary
+  ~ Preconditions 1
+  ~ Preconditions 2
+  ~ Preconditions 3
 		- Test Step 1
 			= Expected 1	
 		- Test Step 2
