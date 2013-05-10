@@ -1,8 +1,8 @@
 // Comments and questions can be sent to leaf@clockwork.net
 
 // This is a test case document sample illustrating how to structure a test case.  Tabs are unimportant, and just for making things look organized.
-// Use a key (+ , - , =) to set up a test case.  You must keep this structure, however, or it will barf. 
-// Test Case is the minimum required, but Summary, Test Steps and Expected Results must be contained underneath a test case.  
+// Use a key (+ , - , =, ~) to set up a test case.  You must keep this structure, however, or it will barf. 
+// Test Case is the minimum required, but Summary, Preconditions, Test Steps and Expected Results must be contained underneath a test case.  
 // C-style (//) and shell-style (# ) comments are both currently respected.
 // Blank lines are ignored.  Always put a space after your key character.
 
