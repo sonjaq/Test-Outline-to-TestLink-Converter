@@ -88,7 +88,8 @@ else
 	$open_step     =  false;
 	$open_steps    =  false;
 	$open_summary  =  false;
-	$i 	           =  0;
+	$open_preconditions = false;
+  $i 	           =  0;
 	$open_suite    =  0;
 	$testplan_name =  $argv[3];
 	
@@ -106,7 +107,7 @@ else
 	$close_test_suite          =  '} ';
 	$open_suite_alt            =  '{';
 	$close_suite_alt           =  '}';
-    
+  $open_test_preconditions   =  '~ ';  
 	
 	// If you want to comment, but don't like the default comment characters, add or change the values in $commentkeys
 	$commentkeys               =  array( '# ', '//', '##', '#' );
@@ -120,8 +121,9 @@ else
 	                            $open_test_suite, 
 	                            $close_test_suite, 
 	                            $open_suite_alt, 
-	                            $close_suite_alt 
-	                            );
+	                            $close_suite_alt,
+	                            $open_test_preconditions
+                              );
 	
 	$keyring                   =  array_merge( $actionkeys, $commentkeys );
 
@@ -242,7 +244,7 @@ else
 	
 	function test_case_summary_close()
 	{
-		$summary_close =  "    ]]>\n    </summary>  \n";
+    $summary_close =  "    ]]>\n    </summary>  \n";
 		
 		if (  $GLOBALS['open_summary']  ==  true  ) {
             fwrite( $GLOBALS['fh'], $summary_close );
@@ -252,6 +254,27 @@ else
 		}
 		
 	}
+
+  function test_case_preconditions( $input )
+  {
+    $preconditions_open = "   <preconditions>\n   <![CDATA[\n";
+    if ( $GLOBALS['open_preconditions'] == false ) {
+      fwrite( $GLOBALS['fh'], $preconditions_open );
+      $GLOBALS['open_preconditions'] = true;
+    }
+    $htmlpreconditions  = htmlspecialchars_decode( $input, ENT_NOQUOTES );
+    $preconditions      = $htmlpreconditions . "<br>\n";
+    fwrite( $GLOBALS['fh'], $preconditions );
+  }
+
+  function test_case_preconditions_close()
+  {
+    $preconditions_close = "  ]]>\n   </preconditions>  \n";
+    if ( $GLOBALS['open_preconditions'] == true ) {
+      fwrite( $GLOBALS['fh'], $preconditions_close );
+      $GLOBALS['open_preconditions'] = false;
+    }
+  }
 	
 	function test_case_test_step(  $input  )
 	{
@@ -406,7 +429,6 @@ else
 			$source_line               =  trim( $line );
 			$input_line                =  htmlspecialchars( $source_line, ENT_QUOTES );
 			$key                       =  substr( $input_line, 0, 2 );
-			
 			// Detecting content on in $input_line - helps with blank lines
 			if ( $input_line ) {
 			    
@@ -428,9 +450,14 @@ else
 							test_case_summary_close();
 							test_case_open_case(  $input_line  );
 							break;
-						case $new_test_step:
-							test_case_summary_close();
-							test_case_test_step(  $input_line  );
+						case $open_test_preconditions:
+              test_case_summary_close();
+              test_case_preconditions( $input_line );
+              break;
+            case $new_test_step:
+              test_case_summary_close();
+							test_case_preconditions_close();
+              test_case_test_step(  $input_line  );
 							break;
 						case $new_test_expected_result:
 							test_case_summary_close();
