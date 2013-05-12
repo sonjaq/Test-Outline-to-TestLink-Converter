@@ -33,6 +33,7 @@ Optionally, a third argument can be supplied for a Test Plan name.
 	-	'- ' Denotes a Test Step
 	=	'= ' Denotes Expected Results.  If no associated step exists, 
 		a blank step is created.
+	~   TestLink precondition
 	//	Comment out a line with '//'
 	# 	Comment out a line with '# '
 	{ <SUITE NAME>  Opens a test suite or folder in TestLink.  
@@ -55,6 +56,7 @@ Optionally, a third argument can be supplied for a Test Plan name.
     { TestSuite
     + TestCase
         Summary Information
+        ~ TestLink Preconditions
             - TestStep
             = Expected Result
         // Ignore this line
@@ -89,7 +91,7 @@ else
 	$open_steps    =  false;
 	$open_summary  =  false;
 	$open_preconditions = false;
-  $i 	           =  0;
+	$i 	           =  0;
 	$open_suite    =  0;
 	$testplan_name =  $argv[3];
 	
@@ -107,7 +109,7 @@ else
 	$close_test_suite          =  '} ';
 	$open_suite_alt            =  '{';
 	$close_suite_alt           =  '}';
-  $open_test_preconditions   =  '~ ';  
+	$open_test_preconditions   =  '~ ';  
 	
 	// If you want to comment, but don't like the default comment characters, add or change the values in $commentkeys
 	$commentkeys               =  array( '# ', '//', '##', '#' );
@@ -289,6 +291,7 @@ else
             test_case_close_step();
 		}
 		
+
 		// Increment the step counter, open the step, then write the step number, 
 		// and the content of the step as $input_line 
 		$GLOBALS['i']++;
@@ -327,8 +330,10 @@ else
             $GLOBALS['open_step']  =  true;
 		}
 
-		//  Write the expected result with the content $input_line
-		$expected   =  "      <expectedresults><![CDATA[" . $input . "]]></expectedresults>\n";
+		$htmlexpected        =  htmlspecialchars_decode( $input, ENT_NOQUOTES);
+		$expected_with_html  =  $htmlexpected . "\n";
+
+		$expected            =  "      <expectedresults><![CDATA[" . $expected_with_html . "]]></expectedresults>\n";
 		fwrite( $GLOBALS['fh'], $expected );
 		test_case_close_step();
 		return;
