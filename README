@@ -43,7 +43,7 @@ Optionally, a third argument can be supplied for a Test Plan name.
   Notes for test outline creation:
   	+	Starting a line with '+ ' creates a test case with the 
   		rest of the line
-  ~ '~ ' Denotes a Precondition. Preconditions are each displayed on their own line.
+	~	'~ ' Denotes a Precondition. Preconditions are each displayed on their own line.
 	-	'- ' Denotes a Test Step
 	=	'= ' Denotes Expected Results.  If no associated step exists, 
 		a blank step is created.
